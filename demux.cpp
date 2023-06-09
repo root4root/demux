@@ -1,7 +1,8 @@
 #include <Arduino.h>
 
 #define SERIAL_SPEED 9600
-#define BUTTON_DEBOUNCE_TIMEOUT 150
+#define BUTTON_DEBOUNCE_TIMEOUT 150 //milliseconds
+#define ANTI_EMI 25 //milliseconds
 #define PRESSED_BUTTON_STATE 1
 
 #define BUTTON_PIN 6
@@ -42,13 +43,21 @@ void readButtonRoutine()
 
     bool currentButtonState = 0;
 
-    if ((millis() - previuosChangeTime) < BUTTON_DEBOUNCE_TIMEOUT) {
-        return;
-    }
-
     currentButtonState = digitalRead(BUTTON_PIN);
 
     if (currentButtonState == previousButtonState) {
+        return;
+    }
+
+    //Anti EMI protection (sparking relay etc.)
+    if ((millis() - previuosChangeTime) > BUTTON_DEBOUNCE_TIMEOUT * 2) {
+    	previuosChangeTime = millis() - (BUTTON_DEBOUNCE_TIMEOUT - ANTI_EMI);
+    	Serial.println("EMI");
+    	return;
+    }
+
+    //Anti debounce protection (bad button's contacts)
+    if ((millis() - previuosChangeTime) < BUTTON_DEBOUNCE_TIMEOUT) {
         return;
     }
 
