@@ -1,8 +1,8 @@
 #include <Arduino.h>
 
 #define SERIAL_SPEED 9600
-#define BUTTON_DEBOUNCE_TIMEOUT 150 //milliseconds
-#define ANTI_EMI 25 //milliseconds
+#define BUTTON_DEBOUNCE_TIMEOUT 250 //milliseconds (150 is enough)
+#define ANTI_EMI 50 //milliseconds (25 is enough)
 #define PRESSED_BUTTON_STATE 1
 
 #define BUTTON_PIN 6
@@ -50,14 +50,14 @@ void readButtonRoutine()
     }
 
     //Anti EMI protection (sparking relay etc.)
-    if ((millis() - previuosChangeTime) > BUTTON_DEBOUNCE_TIMEOUT * 2) {
+    if (millis() - previuosChangeTime > BUTTON_DEBOUNCE_TIMEOUT * 2) {
     	previuosChangeTime = millis() - (BUTTON_DEBOUNCE_TIMEOUT - ANTI_EMI);
     	Serial.println("EMI");
     	return;
     }
 
     //Anti debounce protection (bad button's contacts)
-    if ((millis() - previuosChangeTime) < BUTTON_DEBOUNCE_TIMEOUT) {
+    if (millis() - previuosChangeTime < BUTTON_DEBOUNCE_TIMEOUT) {
         return;
     }
 
@@ -95,20 +95,17 @@ void readSerialRoutine()
 
 void ledSmoothSwitcher(const bool action)
 {
-    static uint8_t angle = 0;
-    int8_t multiplier = 0;
+    uint8_t angle = 0;
+    int8_t multiplier = 1;
 
     if (action == 0) {
         angle = 90;
         multiplier = -1;
-    } else {
-        angle = 0;
-        multiplier = 1;
     }
 
     for(;;) {
         angle += multiplier;
-        analogWrite(VPNLED_PIN, 255*sin(angle*(PI/180)));
+        analogWrite(VPNLED_PIN, 255 * sin(angle * (PI / 180)));
         if (angle ==  0 || angle == 90) {
             break;
         }
